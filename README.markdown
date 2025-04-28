@@ -35,16 +35,15 @@ cd Student-Grading-App-with-LLMs
 Create a `.env` file in the project root with the following content:
 ```env
 DB_NAME=student_db
-DB_USERNAME=root
-DB_PASSWORD=Makedonija.2023
+DB_USERNAME=<your_username>
+DB_PASSWORD=<your_password>
 DDL_AUTO=update
 SPRING_SECURITY=DEBUG
 WEBAPP_BACKEND=DEBUG
-JWT_SECRET=kiro_e_car_very_long_secret_key_minimum_32_bytes
-OPENAI_API_KEY=your_openai_api_key_here
+JWT_SECRET=<your_key>
+OPENAI_API_KEY=<your_key>
 OPENAI_URL=https://api.openai.com/v1/chat/completions
 ```
-Replace `your_openai_api_key_here` with your actual OpenAI API key.
 
 **Note**: Do not commit the `.env` file to version control. It’s included in `.gitignore` for security.
 
