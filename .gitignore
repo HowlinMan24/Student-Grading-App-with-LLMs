@@ -1,0 +1,20 @@
+# Java / Spring Boot
+**/target/
+**/build/
+*.log
+*.class
+*.jar
+
+# Node / Angular
+**/node_modules/
+**/dist/
+.env
+.DS_Store
+
+# IntelliJ / VSCode
+.idea/
+.vscode/
+*.iml
+
+# System files
+Thumbs.db

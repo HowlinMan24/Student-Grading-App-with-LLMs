@@ -1,0 +1,19 @@
+.timeline-dot {
+  transition: transform 0.3s ease;
+  animation: dot-pulse 2s infinite ease-in-out;
+}
+
+@keyframes dot-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+@media (max-width: 768px) {
+  .timeline-dot {
+    display: none;
+  }
+}

@@ -1,0 +1,61 @@
+<section class="min-h-screen bg-gradient-to-b from-blue-100 to-indigo-100 pt-16 flex items-center justify-center relative">
+  <div class="absolute left-1/2 transform -translate-x-1/2 w-6 h-6 bg-blue-600 rounded-full hidden md:block border-4 border-white shadow-lg timeline-dot top-1/2"></div>
+  <div class="p-8 max-w-4xl w-full mx-auto bg-white/30 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 relative z-10" data-aos="zoom-in">
+    <h2 class="text-4xl font-extrabold text-gray-900 mb-6 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+      EduEval Task Chat
+    </h2>
+    <div class="flex items-center gap-3 mb-6">
+      <input
+        [(ngModel)]="prompt"
+        class="flex-grow p-4 bg-white/50 backdrop-blur-sm border-2 border-blue-300 rounded-full focus:ring-2 focus:ring-blue-600 focus:bg-white/70 transition-all duration-300"
+        placeholder="Ask about your task or assignment..."
+        (keyup.enter)="sendPrompt()"
+        [disabled]="loading"
+        data-aos="fade-right"
+      />
+      <button
+        (click)="sendPrompt()"
+        [disabled]="loading"
+        class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-full hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300 disabled:opacity-50"
+        data-aos="fade-left">
+        Send
+      </button>
+    </div>
+    <!-- Chat Window -->
+    <div class="chat-window bg-white/50 backdrop-blur-sm p-6 h-[60vh] overflow-y-auto rounded-xl border border-gray-200/50 flex flex-col">
+      <div class="flex-grow"></div>
+      <div *ngFor="let message of messages; let i = index"
+           class="mb-4 flex"
+           [ngClass]="{
+             'justify-end': message.role === 'teacher',
+             'justify-start': message.role === 'student'
+           }"
+           data-aos="fade-up"
+           [attr.data-aos-delay]="i * 100">
+        <div class="flex items-start gap-3 max-w-[70%]">
+          <svg *ngIf="message.role === 'student'" class="h-10 w-10 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M24 12c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-4.5 0c0-4.142-3.358-7.5-7.5-7.5S4.5 7.858 4.5 12s3.358 7.5 7.5 7.5 7.5-3.358 7.5-7.5zm-3 0c0 2.485-2.015 4.5-4.5 4.5S7.5 14.485 7.5 12 9.515 7.5 12 7.5s4.5 2.015 4.5 4.5z"/>
+          </svg>
+          <svg *ngIf="message.role === 'teacher'" class="h-10 w-10 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM8.547 4.505a.75.75 0 01.398.658v.008a.75.75 0 01-.398.658 8.25 8.25 0 00-3.488 3.662.75.75 0 01-.64.414l-.007-.001a.75.75 0 01-.653-.418 9.75 9.75 0 013.902-4.352.75.75 0 01.886-.029zm7.906-.029a.75.75 0 01.886.029 9.75 9.75 0 013.902 4.352.75.75 0 01-.653.418l-.007.001a.75.75 0 01-.64-.414 8.25 8.25 0 00-3.488-3.662.75.75 0 01-.398-.658v-.008a.75.75 0 01.398-.658zM12 9a3 3 0 100 6 3 3 0 000-6z"/>
+          </svg>
+          <div class="p-4 rounded-2xl prose prose-sm max-w-none"
+               [ngClass]="{
+                 'bg-gradient-to-r from-blue-500 to-blue-700 text-white': message.role === 'teacher',
+                 'bg-gradient-to-r from-green-500 to-green-700 text-white': message.role === 'student'
+               }"
+               [innerHTML]="message.content | markdown">
+            <div class="absolute -bottom-2 left-4 w-4 h-4 transform rotate-45"
+                 [ngClass]="{
+                   'bg-blue-500': message.role === 'teacher',
+                   'bg-green-500': message.role === 'student'
+                 }"></div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="loading" class="text-gray-800 text-center animate-pulse mt-4">
+        EduBot is responding...
+      </div>
+    </div>
+  </div>
+</section>

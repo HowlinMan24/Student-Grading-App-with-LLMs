@@ -1,0 +1,33 @@
+<header class="bg-gradient-to-r from-blue-600 to-indigo-700/80 backdrop-blur-md text-white fixed w-full top-0 z-20 shadow-lg">
+  <nav class="flex justify-between items-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="flex items-center space-x-2" data-aos="fade-right">
+      <a routerLink="/" class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent hover:from-blue-300 hover:to-indigo-300 transition-all duration-300">
+        EduEval
+      </a>
+    </div>
+    <div class="flex items-center space-x-4 sm:space-x-8" data-aos="fade-left">
+      <ng-container *ngIf="authService.isLoggedIn$ | async; else notLoggedIn">
+        <span class="text-blue-100 font-semibold hidden sm:inline bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+          Welcome, {{ userName }}
+        </span>
+        <a routerLink="/chat" class="text-blue-100 font-semibold hover:bg-gradient-to-r hover:from-blue-400 hover:to-indigo-400 hover:bg-clip-text hover:text-transparent transition-all duration-300 transform hover:scale-105">
+          Task Chat
+        </a>
+        <button (click)="logout()" class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-full hover:from-blue-600 hover:to-indigo-600 transform hover:scale-105 transition-all duration-300">
+          Logout
+        </button>
+      </ng-container>
+      <ng-template #notLoggedIn>
+        <a routerLink="/register" class="text-blue-100 font-semibold hover:bg-gradient-to-r hover:from-blue-400 hover:to-indigo-400 hover:bg-clip-text hover:text-transparent transition-all duration-300 transform hover:scale-105">
+          Register
+        </a>
+        <a routerLink="/login" class="text-blue-100 font-semibold hover:bg-gradient-to-r hover:from-blue-400 hover:to-indigo-400 hover:bg-clip-text hover:text-transparent transition-all duration-300 transform hover:scale-105">
+          Login
+        </a>
+        <a routerLink="/chat" class="text-blue-100 font-semibold hover:bg-gradient-to-r hover:from-blue-400 hover:to-indigo-400 hover:bg-clip-text hover:text-transparent transition-all duration-300 transform hover:scale-105">
+          Explore Chat
+        </a>
+      </ng-template>
+    </div>
+  </nav>
+</header>

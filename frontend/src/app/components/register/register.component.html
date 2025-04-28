@@ -1,0 +1,54 @@
+<section class="min-h-screen bg-gradient-to-b from-blue-100 to-indigo-100 pt-16 flex items-center justify-center relative">
+  <div class="absolute left-1/2 transform -translate-x-1/2 w-6 h-6 bg-blue-600 rounded-full hidden md:block border-4 border-white shadow-lg timeline-dot top-1/2"></div>
+  <div class="bg-white/30 backdrop-blur-lg p-10 rounded-2xl shadow-xl w-full max-w-md border border-white/20 transform hover:scale-105 transition-all duration-300 relative z-10" data-aos="flip-up">
+    <h2 class="text-4xl font-extrabold text-center mb-8 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+      Join EduEval
+    </h2>
+    <form #registerForm="ngForm" (ngSubmit)="register(registerForm)">
+      <input
+        name="name"
+        [(ngModel)]="user.name"
+        placeholder="Name"
+        required
+        class="w-full p-4 mb-4 bg-white/50 backdrop-blur-sm border-2 border-blue-300 rounded-full focus:ring-2 focus:ring-blue-600 focus:bg-white/70 transition-all duration-300"
+        data-aos="fade-right"
+        data-aos-delay="100">
+      <input
+        name="email"
+        [(ngModel)]="user.email"
+        type="email"
+        placeholder="Email"
+        required
+        class="w-full p-4 mb-4 bg-white/50 backdrop-blur-sm border-2 border-blue-300 rounded-full focus:ring-2 focus:ring-blue-600 focus:bg-white/70 transition-all duration-300"
+        data-aos="fade-right"
+        data-aos-delay="200">
+      <input
+        name="password"
+        [(ngModel)]="user.password"
+        type="password"
+        placeholder="Password"
+        required
+        class="w-full p-4 mb-4 bg-white/50 backdrop-blur-sm border-2 border-blue-300 rounded-full focus:ring-2 focus:ring-blue-600 focus:bg-white/70 transition-all duration-300"
+        data-aos="fade-right"
+        data-aos-delay="300">
+      <select
+        name="role"
+        [(ngModel)]="user.role"
+        required
+        class="w-full p-4 mb-6 bg-white/50 backdrop-blur-sm border-2 border-blue-300 rounded-full focus:ring-2 focus:ring-blue-600 focus:bg-white/70 transition-all duration-300"
+        data-aos="fade-right"
+        data-aos-delay="400">
+        <option value="STUDENT">Student</option>
+        <option value="TEACHER">Teacher</option>
+      </select>
+      <button
+        type="submit"
+        [disabled]="registerForm.invalid"
+        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-full hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300"
+        data-aos="fade-up"
+        data-aos-delay="500">
+        Register
+      </button>
+    </form>
+  </div>
+</section>
