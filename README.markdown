@@ -61,7 +61,7 @@ This command:
 - **Backend API**: Access `http://localhost:8080` (e.g., use Postman or curl to test API endpoints).
 - **MySQL**: Connect to the database for debugging:
   ```bash
-  docker exec -it database mysql -u root -pMakedonija.2023
+  docker exec -it database mysql -u <your_db_username> -p <your_db_password>
   ```
 
 ### 5. Stop the Application
