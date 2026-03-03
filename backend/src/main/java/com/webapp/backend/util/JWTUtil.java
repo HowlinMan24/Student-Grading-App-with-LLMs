@@ -1,5 +1,6 @@
 package com.webapp.backend.util;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.util.Base64;
 import java.util.Date;
 
 @Component
@@ -15,31 +17,32 @@ public class JWTUtil {
     @Value("${jwt.secret}")
     private String SECRET_KEY;
     private SecretKey key;
-    private static final Long EXPIRATION_TIME = (1000 * 60 * 60 * 10) + 60L;
+    private static final Long EXPIRATION_TIME = (1000 * 60 * 60 * 10) + 60L; // 10 hours + 60 ms
 
     @PostConstruct
     public void init() {
-        key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        byte[] decodedKey = Base64.getDecoder().decode(SECRET_KEY);
+        key = Keys.hmacShaKeyFor(decodedKey);
     }
 
     public String generateToken(String email, String role, String name) {
         return Jwts.builder()
-                .subject(email)
+                .setSubject(email)
                 .claim("role", role)
                 .claim("name", name)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key, SignatureAlgorithm.HS384)
                 .compact();
     }
 
     public String extractEmail(String token) {
-        return Jwts.parser()
-                .verifyWith(key)
+        Claims claims = Jwts.parser()
+                .setSigningKey(key)
                 .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject();
     }
 
     public boolean validateToken(String token, String email) {
@@ -52,12 +55,11 @@ public class JWTUtil {
     }
 
     private boolean isTokenExpired(String token) {
-        Date expiration = Jwts.parser()
-                .verifyWith(key)
+        Claims claims = Jwts.parser()
+                .setSigningKey(key)
                 .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getExpiration();
-        return expiration.before(new Date());
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getExpiration().before(new Date());
     }
 }
