@@ -1,0 +1,110 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  BACKEND_IMAGE: howlinman/backend
+  FRONTEND_IMAGE: howlinman/frontend
+
+jobs:
+  # ── CI: build & push Docker images to DockerHub ─────────────────────────────
+  build-and-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile-backend
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile-frontend
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── CD (bonus): deploy to Kubernetes cluster ─────────────────────────────────
+  # Requires a self-hosted runner on the Minikube host OR a cloud K8s cluster
+  # with KUBECONFIG_DATA (base64-encoded kubeconfig) set as a GitHub secret.
+  deploy:
+    name: Deploy to Kubernetes
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Ensure namespace exists
+        run: kubectl apply -f k8s/namespace.yaml
+
+      - name: Create/update Kubernetes secrets from GitHub Secrets
+        run: |
+          kubectl create secret generic app-secrets \
+            --from-literal=DB_USERNAME="${{ secrets.DB_USERNAME }}" \
+            --from-literal=DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --from-literal=OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+            --namespace=edueval \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Pin image tags to current commit SHA
+        run: |
+          sed -i "s|${{ env.BACKEND_IMAGE }}:latest|${{ env.BACKEND_IMAGE }}:${{ github.sha }}|g" k8s/backend-deployment.yaml
+          sed -i "s|${{ env.FRONTEND_IMAGE }}:latest|${{ env.FRONTEND_IMAGE }}:${{ github.sha }}|g" k8s/frontend-deployment.yaml
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/mysql-service.yaml
+          kubectl apply -f k8s/mysql-statefulset.yaml
+          kubectl apply -f k8s/backend-deployment.yaml
+          kubectl apply -f k8s/backend-service.yaml
+          kubectl apply -f k8s/frontend-deployment.yaml
+          kubectl apply -f k8s/frontend-service.yaml
+          kubectl apply -f k8s/ingress.yaml
+
+      - name: Wait for rollouts to complete
+        run: |
+          kubectl rollout status deployment/backend  -n edueval --timeout=180s
+          kubectl rollout status deployment/frontend -n edueval --timeout=60s

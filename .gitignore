@@ -18,3 +18,9 @@
 
 # System files
 Thumbs.db
+
+# Kubernetes secret with real credentials (use k8s/secret.example.yaml as a template)
+k8s/secret.yaml
+
+# Helper script containing live credentials — never commit this
+setup-github-secrets.sh

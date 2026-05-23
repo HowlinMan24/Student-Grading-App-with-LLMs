@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: edueval
+data:
+  # Database
+  DB_NAME: student_db
+  DDL_AUTO: update
+
+  # OpenAI
+  OPENAI_URL: https://api.openai.com/v1/chat/completions
+
+  # Logging (INFO for production; change to DEBUG locally)
+  LOG_LEVEL_SPRING_SECURITY: INFO
+  LOG_LEVEL_APP: INFO

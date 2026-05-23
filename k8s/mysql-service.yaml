@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: edueval
+  labels:
+    app: mysql
+spec:
+  # Headless service — required by the StatefulSet for stable pod DNS
+  # (mysql-0.mysql.edueval.svc.cluster.local)
+  clusterIP: None
+  selector:
+    app: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306

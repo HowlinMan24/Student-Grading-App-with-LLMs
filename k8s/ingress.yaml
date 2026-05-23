@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: edueval-ingress
+  namespace: edueval
+  annotations:
+    # Enable Minikube ingress addon: minikube addons enable ingress
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"   # allow image uploads
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: edueval.local
+      http:
+        paths:
+          # API traffic goes directly to the backend — no path rewrite needed
+          # because Spring Boot already listens on /api/**
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+          # Everything else is served by the Angular SPA (frontend Nginx)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
