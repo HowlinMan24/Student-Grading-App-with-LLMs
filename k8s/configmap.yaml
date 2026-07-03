@@ -8,8 +8,8 @@ data:
   DB_NAME: student_db
   DDL_AUTO: update
 
-  # OpenAI
-  OPENAI_URL: https://api.openai.com/v1/chat/completions
+  # OpenRouter (free tier)
+  OPENAI_URL: https://openrouter.ai/api/v1/chat/completions
 
   # Logging (INFO for production; change to DEBUG locally)
   LOG_LEVEL_SPRING_SECURITY: INFO

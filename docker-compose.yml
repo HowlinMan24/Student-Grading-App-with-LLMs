@@ -18,7 +18,7 @@ services:
       - logging.level.com.webapp.backend=${WEBAPP_BACKEND}
       - JWT_SECRET=${JWT_SECRET}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_URL=${OPENAI_URL}
+      - OPENAI_API_URL=${OPENAI_URL}
     depends_on:
       db:
         condition: service_healthy
