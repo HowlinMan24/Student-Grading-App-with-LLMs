@@ -136,8 +136,8 @@ Pipeline file: `.github/workflows/ci-cd.yml`
 
 | Job | What it does |
 |-----|-------------|
-| `build-and-push` | Builds both Docker images and pushes to DockerHub (`howlinman/backend`, `howlinman/frontend`). Tagged with `:latest` and `:<git-sha>`. |
-| `deploy` (CD bonus) | Applies all K8s manifests to the cluster configured via `KUBECONFIG_DATA` secret. |
+| `build-and-push` | Builds both Docker images and pushes to DockerHub (`howlinman/backend`, `howlinman/frontend`). Tagged with `:latest` and `:<git-sha>`. Runs on `ubuntu-latest`. |
+| `deploy` (CD bonus) | Applies all K8s manifests to the local Minikube cluster. Runs on `self-hosted` (this Mac), since a GitHub-hosted cloud runner can't reach a cluster on `localhost`. |
 
 **GitHub repository secrets required:**
 
@@ -145,13 +145,12 @@ Pipeline file: `.github/workflows/ci-cd.yml`
 |--------|---------|
 | `DOCKERHUB_USERNAME` | `howlinman` |
 | `DOCKERHUB_TOKEN` | DockerHub access token (not password) |
-| `KUBECONFIG_DATA` | `base64 -i ~/.kube/config` output — for CD deploy job |
 | `DB_USERNAME` | MySQL root username |
 | `DB_PASSWORD` | MySQL root password |
 | `JWT_SECRET` | JWT signing secret |
-| `OPENAI_API_KEY` | OpenAI API key |
+| `OPENAI_API_KEY` | OpenRouter API key (OpenAI-compatible) |
 
-> For local Minikube + CD: export the kubeconfig with `kubectl config view --raw | base64` and store the result as `KUBECONFIG_DATA`. The deploy job requires either a cloud cluster reachable from GitHub's runners, or a self-hosted runner on the same machine as Minikube.
+> The `deploy` job runs directly on the Minikube host as a **self-hosted runner**, so it reads `~/.kube/config` (already set up by `minikube start`) instead of a stored kubeconfig secret — that config would go stale every time Minikube regenerates its certs. One-time setup: repo Settings → Actions → Runners → "New self-hosted runner" (macOS), follow the generated `./config.sh` command, then run `./run.sh` (or install it as a background service with `./svc.sh install && ./svc.sh start`) on this machine while Minikube is running.
 
 ---
 

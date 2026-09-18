@@ -348,11 +348,10 @@ flowchart TD
     C5 --> C6["6. Build frontend image\n   docker build -f Dockerfile-frontend"]
     C6 --> C7["7. Push to DockerHub\n   howlinman/frontend:latest\n   howlinman/frontend:<sha>"]
 
-    C7 --> D["Job 2: deploy\n🏃 runs-on: ubuntu-latest\n⚠️ needs: build-and-push"]
+    C7 --> D["Job 2: deploy\n🏃 runs-on: self-hosted (this Mac)\n⚠️ needs: build-and-push"]
 
     D --> D1["1. actions/checkout@v4"]
-    D1 --> D2["2. azure/setup-kubectl\n   Install kubectl CLI"]
-    D2 --> D3["3. Decode KUBECONFIG_DATA secret\n   Write to ~/.kube/config"]
+    D1 --> D3["3. kubectl cluster-info\n   Verify Minikube is reachable"]
     D3 --> D4["4. Apply namespace.yaml"]
     D4 --> D5["5. Create Kubernetes Secret\n   from GitHub Secrets"]
     D5 --> D6["6. sed — replace :latest\n   with :<git-sha> in manifests"]
@@ -463,39 +462,20 @@ GitHub Actions provides a cache storage area. Buildx uploads each Docker layer a
 
 ---
 
-#### Deploy Job — Steps 1 & 2 — Checkout + kubectl
+#### Deploy Job — Why `runs-on: self-hosted`
 
-```yaml
-- name: Set up kubectl
-  uses: azure/setup-kubectl@v4
-```
-
-`kubectl` is the command-line tool for talking to Kubernetes clusters. GitHub's ubuntu runners don't have it pre-installed. This action downloads the latest stable `kubectl` binary and adds it to the `PATH`.
-
----
-
-#### Deploy Job — Step 3 — Configure kubeconfig
-
-```yaml
-- name: Configure kubeconfig
-  run: |
-    mkdir -p ~/.kube
-    echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > ~/.kube/config
-    chmod 600 ~/.kube/config
-```
-
-`kubectl` needs to know:
+A GitHub-*hosted* runner lives in GitHub's cloud and cannot open a network connection to a Minikube cluster running on `localhost` on this Mac — there is no public address for it to reach. `kubectl` needs to know:
 1. Where is the Kubernetes API server? (hostname and port)
 2. What credentials should I use? (certificate or token)
 
-All of this is stored in a file called `kubeconfig`. In Minikube, `~/.kube/config` is created automatically when you run `minikube start`.
+Both live in `~/.kube/config`, written automatically by `minikube start` — but only readable from the machine Minikube is actually running on.
 
-To use this from a GitHub Actions runner:
-1. On your machine: `kubectl config view --raw | base64` → copy the output
-2. Paste it as a GitHub secret named `KUBECONFIG_DATA`
-3. In the pipeline: decode it back and write to `~/.kube/config`
+The fix is to run the `deploy` job *on that same machine*: this project's laptop is registered with GitHub as a **self-hosted runner** (Settings → Actions → Runners), and `runs-on: self-hosted` targets it instead of a cloud VM. Because the job executes directly on the Minikube host, `kubectl` already has a valid, always-fresh kubeconfig sitting in `~/.kube/config` — no secret needs to be minted, decoded, or kept in sync with Minikube's self-signed certs (which get regenerated every time Minikube restarts). The first pipeline step on this job simply confirms the cluster is reachable:
 
-`chmod 600` restricts access to the file to the current user only — `kubectl` refuses to use a kubeconfig file that is world-readable.
+```yaml
+- name: Verify Minikube is reachable
+  run: kubectl cluster-info
+```
 
 ---
 
@@ -535,11 +515,11 @@ The result: the command is safe to run repeatedly. First run creates the secret.
 #### Deploy Job — Step 6 — Pin image tags with `sed`
 
 ```yaml
-sed -i "s|howlinman/backend:latest|howlinman/backend:${{ github.sha }}|g" k8s/backend-deployment.yaml
-sed -i "s|howlinman/frontend:latest|howlinman/frontend:${{ github.sha }}|g" k8s/frontend-deployment.yaml
+sed -i '' "s|howlinman/backend:latest|howlinman/backend:${{ github.sha }}|g" k8s/backend-deployment.yaml
+sed -i '' "s|howlinman/frontend:latest|howlinman/frontend:${{ github.sha }}|g" k8s/frontend-deployment.yaml
 ```
 
-The manifest files in the repository say `image: howlinman/backend:latest`. Before applying them to the cluster, `sed` (stream editor) does an in-place string replacement: `latest` → the current commit SHA.
+The manifest files in the repository say `image: howlinman/backend:latest`. Before applying them to the cluster, `sed` (stream editor) does an in-place string replacement: `latest` → the current commit SHA. (The empty `''` after `-i` is BSD `sed`'s required backup-suffix argument — this runner is macOS, whose built-in `sed` has different `-i` syntax than the GNU `sed` used on the `ubuntu-latest` build job.)
 
 **Why not just keep `:latest` in the manifests?**
 
@@ -1222,10 +1202,12 @@ echo "$(minikube ip)  edueval.local" | sudo tee -a /etc/hosts
 # Set GitHub Actions secrets (after: brew install gh && gh auth login)
 bash setup-github-secrets.sh
 
-# Export kubeconfig for CI/CD deploy job
-kubectl config view --raw | base64 | \
-  gh secret set KUBECONFIG_DATA \
-  --repo "HowlinMan24/Student-Grading-App-with-LLMs" --stdin
+# Register this Mac as a self-hosted GitHub Actions runner, so the
+# deploy job can reach Minikube directly (one-time setup):
+#   1. Repo → Settings → Actions → Runners → New self-hosted runner (macOS)
+#   2. Follow GitHub's generated ./config.sh command in a runner folder
+#   3. ./run.sh (or ./svc.sh install && ./svc.sh start to run it as a
+#      background service that survives reboots/logout)
 ```
 
 ### Manual Kubernetes deployment

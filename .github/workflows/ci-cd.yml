@@ -54,26 +54,20 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ── CD (bonus): deploy to Kubernetes cluster ─────────────────────────────────
-  # Requires a self-hosted runner on the Minikube host OR a cloud K8s cluster
-  # with KUBECONFIG_DATA (base64-encoded kubeconfig) set as a GitHub secret.
+  # Runs on a self-hosted runner on the same Mac as Minikube, since a
+  # GitHub-hosted runner in the cloud cannot reach a local-only cluster.
   deploy:
     name: Deploy to Kubernetes
     needs: build-and-push
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > ~/.kube/config
-          chmod 600 ~/.kube/config
+      - name: Verify Minikube is reachable
+        run: kubectl cluster-info
 
       - name: Ensure namespace exists
         run: kubectl apply -f k8s/namespace.yaml
@@ -89,9 +83,10 @@ jobs:
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Pin image tags to current commit SHA
+        # BSD sed (macOS self-hosted runner) requires an explicit -i backup suffix argument
         run: |
-          sed -i "s|${{ env.BACKEND_IMAGE }}:latest|${{ env.BACKEND_IMAGE }}:${{ github.sha }}|g" k8s/backend-deployment.yaml
-          sed -i "s|${{ env.FRONTEND_IMAGE }}:latest|${{ env.FRONTEND_IMAGE }}:${{ github.sha }}|g" k8s/frontend-deployment.yaml
+          sed -i '' "s|${{ env.BACKEND_IMAGE }}:latest|${{ env.BACKEND_IMAGE }}:${{ github.sha }}|g" k8s/backend-deployment.yaml
+          sed -i '' "s|${{ env.FRONTEND_IMAGE }}:latest|${{ env.FRONTEND_IMAGE }}:${{ github.sha }}|g" k8s/frontend-deployment.yaml
 
       - name: Apply Kubernetes manifests
         run: |
