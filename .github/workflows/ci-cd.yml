@@ -108,6 +108,8 @@ jobs:
           kubectl apply -f k8s/ingress.yaml
 
       - name: Wait for rollouts to complete
+        # Generous timeouts: pulling a ~600MB image over this network can
+        # alone take several minutes, before the container even starts.
         run: |
-          kubectl rollout status deployment/backend  -n edueval --timeout=180s
-          kubectl rollout status deployment/frontend -n edueval --timeout=60s
+          kubectl rollout status deployment/backend  -n edueval --timeout=420s
+          kubectl rollout status deployment/frontend -n edueval --timeout=300s
