@@ -18,6 +18,7 @@ spec:
       containers:
         - name: backend
           image: howlinman/backend:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
           env:

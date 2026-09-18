@@ -18,6 +18,7 @@ spec:
       containers:
         - name: frontend
           image: howlinman/frontend:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
           readinessProbe:
