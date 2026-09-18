@@ -1,61 +1,207 @@
-<section class="min-h-screen bg-gradient-to-b from-blue-100 to-indigo-100 pt-16 flex items-center justify-center relative">
-  <div class="absolute left-1/2 transform -translate-x-1/2 w-6 h-6 bg-blue-600 rounded-full hidden md:block border-4 border-white shadow-lg timeline-dot top-1/2"></div>
-  <div class="p-8 max-w-4xl w-full mx-auto bg-white/30 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 relative z-10" data-aos="zoom-in">
-    <h2 class="text-4xl font-extrabold text-gray-900 mb-6 text-center bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-      EduEval Task Chat
-    </h2>
-    <div class="flex items-center gap-3 mb-6">
-      <input
-        [(ngModel)]="prompt"
-        class="flex-grow p-4 bg-white/50 backdrop-blur-sm border-2 border-blue-300 rounded-full focus:ring-2 focus:ring-blue-600 focus:bg-white/70 transition-all duration-300"
-        placeholder="Ask about your task or assignment..."
-        (keyup.enter)="sendPrompt()"
-        [disabled]="loading"
-        data-aos="fade-right"
-      />
-      <button
-        (click)="sendPrompt()"
-        [disabled]="loading"
-        class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-full hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300 disabled:opacity-50"
-        data-aos="fade-left">
-        Send
+<div class="flex bg-[var(--bg)] overflow-hidden" [class.role-teacher]="userRole === 'TEACHER'" style="height:100vh">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="w-64 bg-[var(--sidebar-bg)] border-r border-zinc-800 flex-col flex-shrink-0 hidden md:flex">
+    <div class="p-4 border-b border-zinc-800 flex items-center gap-2.5">
+      <div class="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center flex-shrink-0">
+        <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z"/>
+          <path d="M3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0z"/>
+        </svg>
+      </div>
+      <span class="text-zinc-200 font-semibold text-sm">EduEval</span>
+      <span class="ml-auto text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full border"
+            [style.color]="'var(--accent)'" [style.borderColor]="'var(--accent)'" [style.background]="'var(--accent-soft)'">
+        {{ isTeacher ? 'Teacher' : 'Student' }}
+      </span>
+    </div>
+
+    <div class="p-3">
+      <button (click)="clearChat()"
+              class="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 text-sm font-medium transition-colors border border-zinc-700/50 hover:border-zinc-700">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        New conversation
       </button>
     </div>
-    <!-- Chat Window -->
-    <div class="chat-window bg-white/50 backdrop-blur-sm p-6 h-[60vh] overflow-y-auto rounded-xl border border-gray-200/50 flex flex-col">
-      <div class="flex-grow"></div>
-      <div *ngFor="let message of messages; let i = index"
-           class="mb-4 flex"
-           [ngClass]="{
-             'justify-end': message.role === 'teacher',
-             'justify-start': message.role === 'student'
-           }"
-           data-aos="fade-up"
-           [attr.data-aos-delay]="i * 100">
-        <div class="flex items-start gap-3 max-w-[70%]">
-          <svg *ngIf="message.role === 'student'" class="h-10 w-10 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M24 12c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-4.5 0c0-4.142-3.358-7.5-7.5-7.5S4.5 7.858 4.5 12s3.358 7.5 7.5 7.5 7.5-3.358 7.5-7.5zm-3 0c0 2.485-2.015 4.5-4.5 4.5S7.5 14.485 7.5 12 9.515 7.5 12 7.5s4.5 2.015 4.5 4.5z"/>
-          </svg>
-          <svg *ngIf="message.role === 'teacher'" class="h-10 w-10 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM8.547 4.505a.75.75 0 01.398.658v.008a.75.75 0 01-.398.658 8.25 8.25 0 00-3.488 3.662.75.75 0 01-.64.414l-.007-.001a.75.75 0 01-.653-.418 9.75 9.75 0 013.902-4.352.75.75 0 01.886-.029zm7.906-.029a.75.75 0 01.886.029 9.75 9.75 0 013.902 4.352.75.75 0 01-.653.418l-.007.001a.75.75 0 01-.64-.414 8.25 8.25 0 00-3.488-3.662.75.75 0 01-.398-.658v-.008a.75.75 0 01.398-.658zM12 9a3 3 0 100 6 3 3 0 000-6z"/>
-          </svg>
-          <div class="p-4 rounded-2xl prose prose-sm max-w-none"
-               [ngClass]="{
-                 'bg-gradient-to-r from-blue-500 to-blue-700 text-white': message.role === 'teacher',
-                 'bg-gradient-to-r from-green-500 to-green-700 text-white': message.role === 'student'
-               }"
-               [innerHTML]="message.content | markdown">
-            <div class="absolute -bottom-2 left-4 w-4 h-4 transform rotate-45"
-                 [ngClass]="{
-                   'bg-blue-500': message.role === 'teacher',
-                   'bg-green-500': message.role === 'student'
-                 }"></div>
-          </div>
+
+    <div class="flex-1 px-3 py-2 overflow-y-auto">
+      <p class="text-zinc-600 text-xs px-2 py-1">No previous chats</p>
+    </div>
+
+    <div class="p-3 border-t border-zinc-800">
+      <div class="flex items-center gap-3 px-2 py-2 rounded-xl">
+        <div class="w-8 h-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          {{ userName ? userName.charAt(0).toUpperCase() : 'U' }}
         </div>
-      </div>
-      <div *ngIf="loading" class="text-gray-800 text-center animate-pulse mt-4">
-        EduBot is responding...
+        <div class="flex-1 min-w-0">
+          <p class="text-zinc-200 text-sm font-medium truncate">{{ userName || 'User' }}</p>
+          <p class="text-zinc-500 text-xs capitalize">{{ userRole ? userRole.toLowerCase() : 'student' }}</p>
+        </div>
+        <button (click)="logout()" title="Sign out"
+                class="flex-shrink-0 text-zinc-600 hover:text-zinc-300 p-1.5 rounded-lg hover:bg-zinc-800 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/>
+          </svg>
+        </button>
       </div>
     </div>
+  </aside>
+
+  <!-- ===== MAIN AREA ===== -->
+  <div class="flex-1 flex flex-col min-w-0">
+
+    <!-- Messages -->
+    <div #chatWindow class="flex-1 overflow-y-auto" (scroll)="onScroll()">
+
+      <!-- Empty state -->
+      <div *ngIf="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center px-6 py-12">
+        <div class="w-14 h-14 rounded-2xl bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-5">
+          <svg class="w-7 h-7 text-zinc-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"/>
+          </svg>
+        </div>
+        <h2 class="text-zinc-100 text-lg font-semibold mb-2">{{ isTeacher ? "Upload a student's work to review" : 'Upload your work for feedback' }}</h2>
+        <p class="text-zinc-500 text-sm max-w-xs leading-relaxed mb-7">
+          {{ isTeacher
+            ? "Attach a photo of a student's answers and ask EduBot to grade them against the rubric."
+            : 'Attach a photo of your answers and ask EduBot to grade them against the rubric.' }}
+        </p>
+        <div class="grid grid-cols-1 gap-2 w-full max-w-xs">
+          <button *ngFor="let s of suggestions" (click)="prompt = s.prompt"
+                  class="px-4 py-2.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-300 text-sm text-left transition-colors">
+            {{ s.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Message list -->
+      <div *ngIf="messages.length > 0" class="max-w-3xl mx-auto px-6 py-8 space-y-6">
+
+        <ng-container *ngFor="let message of messages">
+
+          <!-- User message -->
+          <div *ngIf="message.role === 'student'" class="flex justify-end">
+            <div class="max-w-[78%]">
+              <div class="bg-[var(--accent)] text-white rounded-2xl rounded-br-sm px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap">{{ message.content }}</div>
+              <div *ngIf="message.files?.length" class="flex flex-wrap gap-1.5 mt-2 justify-end">
+                <span *ngFor="let f of message.files"
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-800 border border-zinc-700/60 text-zinc-400 text-xs">
+                  <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/>
+                  </svg>
+                  {{ f.name }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI message -->
+          <div *ngIf="message.role === 'teacher'" class="flex gap-3">
+            <div class="w-7 h-7 rounded-full bg-[var(--accent)] flex-shrink-0 flex items-center justify-center mt-0.5">
+              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"/>
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-zinc-500 text-xs font-medium mb-1.5">EduBot</p>
+              <div class="bg-zinc-800/80 border border-zinc-700/50 text-zinc-200 rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-relaxed prose prose-sm prose-invert max-w-none"
+                   [innerHTML]="message.content | markdown">
+              </div>
+            </div>
+          </div>
+
+        </ng-container>
+
+        <!-- Loading dots -->
+        <div *ngIf="loading" class="flex gap-3">
+          <div class="w-7 h-7 rounded-full bg-[var(--accent)] flex-shrink-0 flex items-center justify-center mt-0.5">
+            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="text-zinc-500 text-xs font-medium mb-1.5">EduBot</p>
+            <div class="bg-zinc-800/80 border border-zinc-700/50 rounded-2xl rounded-tl-sm px-4 py-3.5 inline-flex items-center gap-1.5">
+              <span class="dot"></span>
+              <span class="dot" style="animation-delay:.15s"></span>
+              <span class="dot" style="animation-delay:.3s"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== INPUT AREA ===== -->
+    <div class="border-t border-zinc-800 bg-[var(--sidebar-bg-translucent)] px-4 py-4">
+      <div class="max-w-3xl mx-auto">
+
+        <!-- Selected file chips with remove button -->
+        <div *ngIf="selectedFiles.length" class="flex flex-wrap gap-2 mb-3">
+          <span *ngFor="let f of selectedFiles; let i = index"
+                class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700/60 text-zinc-300 text-xs">
+            <svg class="w-3 h-3 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/>
+            </svg>
+            {{ f.name }}
+            <button (click)="removeFile(i)"
+                    class="ml-0.5 text-zinc-500 hover:text-zinc-300 rounded p-0.5 hover:bg-zinc-700 transition-colors">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </span>
+        </div>
+
+        <!-- Suggested prompts (always accessible, not just on empty chat) -->
+        <div *ngIf="!prompt.trim() && !selectedFiles.length" class="flex flex-wrap gap-1.5 mb-2">
+          <button *ngFor="let s of suggestions" (click)="prompt = s.prompt"
+                  class="px-2.5 py-1 rounded-full border text-xs transition-colors"
+                  [style.color]="'var(--accent)'" [style.borderColor]="'var(--accent-soft)'"
+                  [style.background]="'var(--accent-soft)'">
+            {{ s.label }}
+          </button>
+        </div>
+
+        <!-- Input box -->
+        <div class="flex items-end gap-2 bg-zinc-800/60 border border-zinc-700/60 focus-within:border-zinc-600 rounded-2xl px-3 py-2.5 transition-colors">
+          <label class="flex-shrink-0 p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/60 cursor-pointer transition-colors mb-0.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/>
+            </svg>
+            <input type="file" multiple accept="image/*" (change)="onFilesSelected($event)" class="hidden">
+          </label>
+
+          <textarea
+            [(ngModel)]="prompt"
+            (keydown)="onKeyDown($event)"
+            [disabled]="loading && !streaming"
+            [placeholder]="isTeacher ? 'Ask about grading or feedback for this submission...' : 'Ask about your task or assignment...'"
+            rows="1"
+            class="flex-1 bg-transparent text-zinc-100 placeholder-zinc-600 resize-none outline-none text-sm leading-relaxed max-h-36 py-1"
+          ></textarea>
+
+          <button
+            (click)="streaming ? stopStreaming() : sendPrompt()"
+            [disabled]="!streaming && (loading || !prompt.trim())"
+            [title]="streaming ? 'Stop generating' : 'Send'"
+            class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:bg-zinc-700 disabled:text-zinc-500 text-white rounded-lg transition-all duration-200 mb-0.5 flex-shrink-0">
+            <svg *ngIf="!streaming" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.896 28.896 0 0015.293-7.154.75.75 0 000-1.115A28.897 28.897 0 003.105 2.289z"/>
+            </svg>
+            <svg *ngIf="streaming" class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+              <rect x="4" y="4" width="12" height="12" rx="2"/>
+            </svg>
+          </button>
+        </div>
+
+        <p class="text-zinc-700 text-xs text-center mt-2">
+          EduBot grades practice work only — not live exams &nbsp;·&nbsp; Enter to send, Shift+Enter for new line
+        </p>
+      </div>
+    </div>
+
   </div>
-</section>
+</div>

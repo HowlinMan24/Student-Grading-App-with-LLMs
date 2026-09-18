@@ -1,42 +1,162 @@
-<section class="min-h-screen bg-gradient-to-b from-blue-50 to-indigo-50 pt-16 relative">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex flex-col items-center text-center relative z-10" data-aos="fade-down">
-    <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
-      Empower Your Learning with <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">EduEval</span>
-    </h1>
-    <p class="text-xl text-gray-700 mb-8 max-w-3xl">
-      Evaluate tasks, collaborate in real-time, and achieve academic success with our AI-powered platform.
+<!-- ===== HERO ===== -->
+<section class="relative min-h-screen bg-zinc-950 flex flex-col overflow-hidden">
+  <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:72px_72px] pointer-events-none"></div>
+
+  <div class="relative z-10 flex-1 flex flex-col justify-center max-w-6xl mx-auto px-6 pt-36 pb-20">
+    <p class="text-zinc-500 text-sm font-medium mb-8 animate-in delay-1 tracking-wide">
+      Formative feedback · Not exam assistance
     </p>
-    <img [src]="heroImage.src" [alt]="heroImage.alt" class="rounded-xl shadow-lg w-full max-w-4xl mb-8 transform hover:scale-105 transition-all duration-300" data-aos="zoom-in">
-    <a routerLink="/register" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300">
-      Get Started
-    </a>
-  </div>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
-    <div *ngFor="let feature of features; let i = index"
-         class="py-12 flex flex-col md:flex-row items-center gap-8"
-         [ngClass]="{
-           'md:flex-row-reverse': i % 2 === 0,
-           'md:flex-row': i % 2 !== 0
-         }"
-         data-aos="fade-up"
-         [attr.data-aos-delay]="i * 200">
-      <div class="md:w-1/2 text-center">
-        <h3 class="text-3xl font-bold text-gray-800 mb-4 inline-block border-2 border-blue-300 rounded-md px-4 py-2 hover:shadow-lg hover:shadow-blue-400/50 transition-all duration-300">
-          {{ feature.title }}
-        </h3>
-        <p class="text-lg text-gray-600">{{ feature.description }}</p>
+
+    <h1 class="font-black leading-[0.88] tracking-tight mb-8">
+      <div class="overflow-hidden">
+        <span class="block text-zinc-100 animate-in delay-2" style="font-size:clamp(52px,9vw,120px)">Smart</span>
       </div>
-      <div class="md:w-1/2">
-        <img [src]="feature.image.src" [alt]="feature.image.alt" class="rounded-xl shadow-lg w-full transform hover:scale-105 transition-all duration-300">
+      <div class="overflow-hidden">
+        <span class="block bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent animate-in delay-3" style="font-size:clamp(52px,9vw,120px)">Grading.</span>
+      </div>
+      <div class="overflow-hidden">
+        <span class="block text-zinc-100 animate-in delay-4" style="font-size:clamp(52px,9vw,120px)">Real Feedback.</span>
+      </div>
+    </h1>
+
+    <p class="text-zinc-400 text-lg sm:text-xl max-w-lg mb-10 leading-relaxed animate-in delay-5">
+      Upload your practice work — text or photos of handwritten answers — and get rubric-aligned feedback before the exam counts.
+    </p>
+
+    <div class="flex flex-wrap gap-3 animate-in delay-5">
+      <a routerLink="/register"
+         class="inline-flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200">
+        Get started
+        <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z"/>
+        </svg>
+      </a>
+      <a routerLink="/login"
+         class="inline-flex items-center bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold px-6 py-3 rounded-xl transition-all duration-200 border border-zinc-700/60">
+        Sign in
+      </a>
+    </div>
+  </div>
+
+  <div class="absolute bottom-0 inset-x-0 h-px bg-zinc-800"></div>
+</section>
+
+<!-- ===== STATS ===== -->
+<section class="bg-zinc-900 border-b border-zinc-800">
+  <div class="max-w-6xl mx-auto px-6">
+    <dl class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-zinc-800">
+      <div *ngFor="let stat of stats" class="flex flex-col py-10 px-8 first:pl-0">
+        <dt class="text-zinc-500 text-xs font-semibold uppercase tracking-widest mb-3">{{ stat.label }}</dt>
+        <dd class="text-5xl font-black text-zinc-100 leading-none tracking-tight">{{ stat.value }}</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section class="bg-zinc-950 py-28">
+  <div class="max-w-6xl mx-auto px-6">
+    <h2 class="text-3xl sm:text-4xl font-bold text-zinc-100 mb-3 leading-tight">
+      Practice smarter, not harder
+    </h2>
+    <p class="text-zinc-500 mb-16 max-w-md text-sm leading-relaxed">
+      Submit work between classes and get feedback while you still have time to improve.
+    </p>
+
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="group bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-7 transition-all duration-200">
+        <div class="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-6 group-hover:border-indigo-500/30 transition-colors">
+          <svg class="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+          </svg>
+        </div>
+        <h3 class="text-zinc-100 font-semibold mb-2 text-sm">Immediate feedback</h3>
+        <p class="text-zinc-500 text-sm leading-relaxed">Get rubric-aligned comments on your answers within seconds, not days after the assignment is due.</p>
+      </div>
+
+      <div class="group bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-7 transition-all duration-200">
+        <div class="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-6 group-hover:border-indigo-500/30 transition-colors">
+          <svg class="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+          </svg>
+        </div>
+        <h3 class="text-zinc-100 font-semibold mb-2 text-sm">Exam-safe by design</h3>
+        <p class="text-zinc-500 text-sm leading-relaxed">EduBot recognises live exam and test questions and refuses to answer them — keeping academic standards intact.</p>
+      </div>
+
+      <div class="group bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-7 transition-all duration-200">
+        <div class="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center mb-6 group-hover:border-indigo-500/30 transition-colors">
+          <svg class="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+          </svg>
+        </div>
+        <h3 class="text-zinc-100 font-semibold mb-2 text-sm">Works with photos</h3>
+        <p class="text-zinc-500 text-sm leading-relaxed">Snap a photo of your handwritten work. EduBot reads and grades handwriting, diagrams, and typed answers equally well.</p>
       </div>
     </div>
   </div>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center relative z-50" data-aos="zoom-in">
-    <h2 class="text-4xl font-extrabold text-gray-900 mb-6">
-      Ready to Transform Your Learning?
-    </h2>
-    <a routerLink="/chat" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-4 rounded-full font-bold text-lg hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-300">
-      Try Task Chat Now
-    </a>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="bg-zinc-900 border-y border-zinc-800 py-28">
+  <div class="max-w-6xl mx-auto px-6">
+    <h2 class="text-3xl sm:text-4xl font-bold text-zinc-100 mb-16">How it works</h2>
+
+    <div class="grid md:grid-cols-3 gap-10">
+      <div *ngFor="let step of steps; let i = index">
+        <div class="flex items-center gap-4 mb-5">
+          <span class="text-6xl font-black text-zinc-800 leading-none select-none tabular-nums">0{{ i + 1 }}</span>
+          <div class="h-px flex-1 bg-zinc-800"></div>
+        </div>
+        <h3 class="text-zinc-100 font-semibold mb-3 text-sm">{{ step.title }}</h3>
+        <p class="text-zinc-500 text-sm leading-relaxed">{{ step.description }}</p>
+      </div>
+    </div>
   </div>
 </section>
+
+<!-- ===== CTA ===== -->
+<section class="bg-zinc-950 py-28">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="relative rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden px-10 py-20 text-center">
+      <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
+
+      <h2 class="text-3xl sm:text-4xl font-bold text-zinc-100 mb-4 max-w-md mx-auto leading-tight">
+        Get feedback before it counts
+      </h2>
+      <p class="text-zinc-500 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
+        Practice on your own time and know exactly where you stand before the real assessment.
+      </p>
+      <div class="flex flex-wrap gap-3 justify-center">
+        <a routerLink="/register"
+           class="inline-flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200">
+          Create account
+          <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z"/>
+          </svg>
+        </a>
+        <a routerLink="/chat"
+           class="inline-flex items-center bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold px-6 py-3 rounded-xl transition-all duration-200 border border-zinc-700/60">
+          Try without account
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="bg-zinc-950 border-t border-zinc-800 py-6">
+  <div class="max-w-6xl mx-auto px-6 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-5 h-5 rounded-md bg-indigo-500 flex items-center justify-center">
+        <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3z"/>
+          <path d="M3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0z"/>
+        </svg>
+      </div>
+      <span class="text-zinc-500 text-sm">EduEval</span>
+    </div>
+    <p class="text-zinc-600 text-xs">© 2025 EduEval</p>
+  </div>
+</footer>

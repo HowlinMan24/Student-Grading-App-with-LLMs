@@ -24,3 +24,6 @@ k8s/secret.yaml
 
 # Helper script containing live credentials — never commit this
 setup-github-secrets.sh
+
+# Local credentials dump — never commit this
+credentials.txt

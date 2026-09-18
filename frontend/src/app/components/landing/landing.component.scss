@@ -1,9 +1,26 @@
-.feature-title {
-  transition: all 0.3s ease;
+.text-outline {
+  -webkit-text-stroke: 2px rgba(0, 0, 0, 0.12);
+  color: transparent;
 }
 
-@media (max-width: 768px) {
-  .text-center {
-    text-align: center;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
+
+.animate-in {
+  opacity: 0;
+  animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.18s; }
+.delay-3 { animation-delay: 0.32s; }
+.delay-4 { animation-delay: 0.48s; }
+.delay-5 { animation-delay: 0.64s; }

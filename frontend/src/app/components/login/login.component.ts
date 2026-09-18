@@ -1,13 +1,14 @@
 import {Component} from '@angular/core';
 import {FormsModule, NgForm} from "@angular/forms";
 import {AuthService} from "../../service/auth.service";
-import {Router} from "@angular/router";
+import {Router, RouterLink} from "@angular/router";
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
-    FormsModule
+    FormsModule,
+    RouterLink
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
@@ -22,7 +23,7 @@ export class LoginComponent {
   login(form: NgForm) {
     if (form.valid) {
       this.authService.login(this.email, this.password).subscribe(
-        token => {
+        (token) => {
           localStorage.setItem('token', token);
           this.router.navigateByUrl('/chat');
         },

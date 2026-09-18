@@ -2,13 +2,14 @@ import {Component, OnInit} from '@angular/core';
 import {User} from "../../interface/user.interface";
 import {FormsModule, NgForm} from "@angular/forms";
 import {AuthService} from "../../service/auth.service";
-import {Router} from "@angular/router";
+import {Router, RouterLink} from "@angular/router";
 
 @Component({
   selector: 'app-register',
   standalone: true,
   imports: [
-    FormsModule
+    FormsModule,
+    RouterLink
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss'
