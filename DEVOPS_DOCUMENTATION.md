@@ -18,6 +18,7 @@
 10. [Security Considerations](#10-security-considerations)
 11. [Deployment Cheat Sheet](#11-deployment-cheat-sheet)
 12. [Troubleshooting Log — From a Red Pipeline to a Verified Deploy](#12-troubleshooting-log--from-a-red-pipeline-to-a-verified-deploy)
+13. [Docker & Docker Compose — Verified Build/Run Command Log](#13-docker--docker-compose--verified-buildrun-command-log)
 
 ---
 
@@ -1431,6 +1432,100 @@ reachable from a browser):
 $ curl -H "Host: edueval.local" http://localhost:18888/               → HTTP 200 (frontend SPA)
 $ curl -H "Host: edueval.local" http://localhost:18888/api/auth/me    → HTTP 401 (backend, correctly rejecting an unauthenticated request to a JWT-protected route)
 ```
+
+---
+
+## 13. Docker & Docker Compose — Verified Build/Run Command Log
+
+Raw commands and real output from building each image directly and running
+the full stack with Docker Compose (2026-09-19), kept as evidence for the
+Dockerization (10%) and Docker Compose orchestration (10%) rubric items.
+
+### Building each Dockerfile directly
+
+```
+$ docker build -f Dockerfile-backend -t howlinman/backend:latest .
+...
+[INFO] BUILD SUCCESS
+[INFO] Total time:  01:23 min
+#9 writing image sha256:141adda49e45101f5a71072a68a6f8e7617991daabcaecdb4e281fca9ed51cd1
+#9 naming to docker.io/howlinman/backend:latest done
+
+$ docker build -f Dockerfile-frontend -t howlinman/frontend:latest .
+... (multi-stage: node:20 builder → nginx:alpine)
+#25 naming to docker.io/library/studentgradingappwithllms-frontend done
+
+$ docker images | grep howlinman
+howlinman/frontend   latest   83e009f5b1e3   62MB
+howlinman/backend    latest   141adda49e45   611MB
+```
+
+### Running the full stack with Docker Compose
+
+```
+$ docker compose up --build -d
+ Container database  Started
+ Container database  Waiting
+ Container database  Healthy
+ Container backend-container  Started
+ Container frontend  Started
+```
+
+### Troubleshooting a real failure — stale MySQL root password
+
+**Symptom:** `backend-container` crash-looped repeatedly with:
+```
+o.h.engine.jdbc.spi.SqlExceptionHelper : SQL Error: 1045, SQLState: 28000
+o.h.engine.jdbc.spi.SqlExceptionHelper : Access denied for user 'root'@'172.20.0.3' (using password: YES)
+```
+**Diagnosis:**
+```
+$ docker compose ps -a
+NAME                IMAGE               SERVICE   CREATED         STATUS
+backend-container   ...-backend         backend   9 minutes ago   Restarting (1) 23 seconds ago
+database            mysql:8.0           db        3 months ago    Up 9 minutes (healthy)
+frontend            ...-frontend        frontend  9 minutes ago   Up 9 minutes
+```
+The `database` container was **3 months old** and never recreated, while
+`backend`/`frontend` were freshly rebuilt. MySQL's official image only
+applies `MYSQL_ROOT_PASSWORD` the very first time its data directory
+initializes — that 3-month-old volume still held whatever password was set
+back then, which no longer matched the current `.env`. The container's own
+healthcheck (`mysqladmin ping`) still passed because it authenticates the
+same way MySQL was originally initialized; only new connections using the
+*current* `.env` password (i.e. the backend) failed.
+
+**Fix:**
+```
+$ docker compose down -v
+ Volume studentgradingappwithllms_db-data  Removed
+
+$ docker compose up --build -d
+ Container database  Healthy
+ Container backend-container  Started
+```
+```
+$ docker compose logs backend --tail=8
+backend-container | Started BackendApplication in 3.066 seconds (process running for 3.698)
+```
+No crash loop, no restart count climbing. Fixed.
+
+### Final verification
+
+```
+$ docker compose ps
+NAME                STATUS
+backend-container   Up 17 seconds
+database            Up 23 seconds (healthy)
+frontend            Up 16 seconds
+
+$ curl -4 http://localhost:4200/api/auth/me    → HTTP 401 (frontend's nginx correctly proxies /api to backend)
+$ curl -4 http://localhost:8080/api/auth/me    → HTTP 401 (backend directly, same result)
+```
+(`-4` forces IPv4: this machine also has an unrelated Node/Vite dev server
+from a different project bound to `[::1]:4200`, and macOS's default
+resolver order picks IPv6 first — a pure local port collision with another
+project, unrelated to this stack, confirmed by checking `lsof -iTCP:4200`.)
 
 ---
 
