@@ -17,6 +17,7 @@
 9. [API Routing — How the Frontend Finds the Backend](#9-api-routing--how-the-frontend-finds-the-backend)
 10. [Security Considerations](#10-security-considerations)
 11. [Deployment Cheat Sheet](#11-deployment-cheat-sheet)
+12. [Troubleshooting Log — From a Red Pipeline to a Verified Deploy](#12-troubleshooting-log--from-a-red-pipeline-to-a-verified-deploy)
 
 ---
 
@@ -1272,6 +1273,163 @@ cd backend && ./mvnw spring-boot:run
 # Frontend (proxies /api to localhost:8080)
 cd frontend && npm start
 # → http://localhost:4200
+```
+
+---
+
+## 12. Troubleshooting Log — From a Red Pipeline to a Verified Deploy
+
+This section documents an actual debugging session (2026-09-18) that took the
+pipeline from consistently failing to a fully green CI/CD run with a verified
+Kubernetes deployment. It is kept as evidence of the process, not just the
+end state — five distinct, unrelated failures had to be found and fixed in
+sequence, each one only visible after the previous was resolved.
+
+### Starting point
+
+`git status` showed the working tree diverged from `origin/main`: several
+frontend files were modified but never committed, and two files required by
+the Docker build — `frontend/nginx.conf` and `frontend/proxy.conf.json` —
+were untracked (`??`) and had never once existed in any commit. `gh run
+list` showed the last several `CI/CD Pipeline` runs on GitHub as `failure`.
+
+### Issue 1 — Missing `nginx.conf` breaks every Docker build
+
+**Symptom** (`gh run view <id> --log-failed`, run `28648698130`):
+```
+ERROR: failed to build: failed to solve: failed to compute cache key:
+failed to calculate checksum of ref ...: "/frontend/nginx.conf": not found
+```
+**Diagnosis:** `Dockerfile-frontend` has `COPY frontend/nginx.conf
+/etc/nginx/conf.d/default.conf`, but the file was never committed —
+confirmed via `git ls-files | grep nginx.conf` (no output) and `git log
+--all -p -- frontend/nginx.conf` (empty history).
+
+**Fix:** committed `frontend/nginx.conf` and `frontend/proxy.conf.json`
+along with the rest of the pending frontend work.
+Commit [`ec4b2e7`](https://github.com/HowlinMan24/Student-Grading-App-with-LLMs/commit/ec4b2e7).
+
+### Issue 2 — Live secrets hardcoded in a tracked file
+
+**Symptom:** `git diff backend/src/main/resources/application.properties`
+showed the real DB password, JWT secret, and OpenRouter API key written in
+plaintext, replacing the original `${DB_PASSWORD}` / `${JWT_SECRET}` /
+`${OPENAI_API_KEY}` placeholders — and this file is *not* gitignored.
+
+**Diagnosis:** since the assignment requires a **public** repository,
+committing this file as-is would have permanently leaked those credentials
+into git history.
+
+**Fix:** reverted the file to read from environment variables again, matching
+`docker-compose.yml`'s existing env-var injection. Included in commit
+`ec4b2e7` above.
+
+### Issue 3 — CD job can't reach a cluster on `localhost`
+
+**Symptom:** the `deploy` job ran on `runs-on: ubuntu-latest` and decoded a
+`KUBECONFIG_DATA` secret pointing at Minikube — but a GitHub-hosted runner
+lives in GitHub's cloud and has no network path to a cluster bound to
+`127.0.0.1` on a laptop.
+
+**Fix:** registered this machine as a GitHub Actions **self-hosted runner**
+(`~/actions-runner`, installed as a persistent `launchd` service via
+`./svc.sh install && ./svc.sh start`) and changed the job to `runs-on:
+self-hosted`. This also removed the need for the `KUBECONFIG_DATA` secret
+entirely — the runner already has a valid `~/.kube/config` from `minikube
+start`. Commit [`403c11c`](https://github.com/HowlinMan24/Student-Grading-App-with-LLMs/commit/403c11c).
+
+```
+$ gh api repos/HowlinMan24/Student-Grading-App-with-LLMs/actions/runners --jq '.runners[] | {name, status, busy}'
+{"busy":false,"name":"edueval-mac-runner","status":"online"}
+```
+
+### Issue 4 — Expired DockerHub token, stale OpenAI key
+
+**Symptom** (run `35374749064`):
+```
+Logging into docker.io...
+Error response from daemon: Get "https://registry-1.docker.io/v2/":
+unauthorized: personal access token is expired
+```
+**Diagnosis:** the `DOCKERHUB_TOKEN` GitHub secret had expired since it was
+first set months earlier. Separately, `OPENAI_API_KEY` had been set from an
+old plain-OpenAI-format key (`sk-proj-...`), while the app had since moved to
+OpenRouter (`sk-or-v1-...`) — the deployed backend would have authenticated
+with the wrong provider.
+
+**Fix:** generated a fresh DockerHub access token (Account Settings →
+Security → New Access Token) and updated both secrets:
+```
+gh secret set DOCKERHUB_TOKEN --repo HowlinMan24/Student-Grading-App-with-LLMs --body "***"
+gh secret set OPENAI_API_KEY  --repo HowlinMan24/Student-Grading-App-with-LLMs --body "***"
+```
+
+### Issue 5 — Single-architecture images can't run on the deploy target
+
+**Symptom** (local Minikube test after `minikube image load`):
+```
+Warning  Failed  pod/backend-f8c99445-gcz72  Failed to pull image
+"howlinman/backend:latest": no matching manifest for linux/arm64/v8
+in the manifest list entries
+```
+**Diagnosis:** `ubuntu-latest` GitHub runners are `linux/amd64`, but the
+self-hosted runner from Issue 3 is an Apple Silicon Mac (`arm64`) — a
+single-platform image built on the cloud runner simply has no arm64 variant
+to pull.
+
+**Fix:** added `docker/setup-qemu-action@v3` and
+`platforms: linux/amd64,linux/arm64` to both `build-push-action` steps, so
+DockerHub receives a multi-arch manifest list and each platform pulls its
+matching image automatically. Also set `imagePullPolicy: IfNotPresent` on
+both Deployments — correct regardless, since the deploy job pins images to
+immutable `:<git-sha>` tags. Commit
+[`1da614b`](https://github.com/HowlinMan24/Student-Grading-App-with-LLMs/commit/1da614b).
+
+### Issue 6 — Rollout timeout shorter than the image pull itself
+
+**Symptom** (run `35384521980` — build succeeded, deploy failed):
+```
+Waiting for deployment "backend" rollout to finish: 1 old replicas are
+pending termination...
+error: timed out waiting for the condition
+```
+**Diagnosis:** `kubectl describe pod` showed the backend image (~611 MB)
+took `3m14s` just to pull, longer than the `--timeout=180s` given to
+`kubectl rollout status` — the rollout was actually healthy, only the
+timeout budget was too tight for this network.
+
+**Fix:** widened the timeouts to `420s` (backend) and `300s` (frontend).
+Commit [`8b4daac`](https://github.com/HowlinMan24/Student-Grading-App-with-LLMs/commit/8b4daac).
+
+### Final verification — run [`35386026255`](https://github.com/HowlinMan24/Student-Grading-App-with-LLMs/actions/runs/35386026255)
+
+```
+✓ Build & Push Docker Images in 12m8s
+✓ Deploy to Kubernetes in 3m22s
+```
+```
+$ kubectl get pods -n edueval
+NAME                        READY   STATUS    RESTARTS   AGE
+backend-7558fdd67-nfswl     1/1     Running   0          3m31s
+frontend-589d456c7b-rjsm4   1/1     Running   0          3m30s
+mysql-0                     1/1     Running   0          41m
+
+$ kubectl get deploy,svc,ingress -n edueval
+NAME                       READY   UP-TO-DATE   AVAILABLE
+deployment.apps/backend    1/1     1            1
+deployment.apps/frontend   1/1     1            1
+service/backend    ClusterIP   10.105.157.222   <none>   8080/TCP
+service/frontend   ClusterIP   10.104.54.59     <none>   80/TCP
+service/mysql       ClusterIP   None             <none>   3306/TCP
+ingress.networking.k8s.io/edueval-ingress   nginx   edueval.local   192.168.49.2   80
+```
+Ingress routing was confirmed via `kubectl port-forward` to the ingress
+controller with an explicit `Host` header (a stand-in for real DNS, since
+`edueval.local` requires a `/etc/hosts` entry and `minikube tunnel` to be
+reachable from a browser):
+```
+$ curl -H "Host: edueval.local" http://localhost:18888/               → HTTP 200 (frontend SPA)
+$ curl -H "Host: edueval.local" http://localhost:18888/api/auth/me    → HTTP 401 (backend, correctly rejecting an unauthenticated request to a JWT-protected route)
 ```
 
 ---
